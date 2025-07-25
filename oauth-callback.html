@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmirCollider - Login Success</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleIn 0.5s ease-out 0.3s both;
+        }
+        
+        @keyframes scaleIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+        
+        .checkmark {
+            width: 40px;
+            height: 40px;
+            stroke: white;
+            stroke-width: 3;
+            fill: none;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .error {
+            display: none;
+            color: #f44336;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <h1>Processing...</h1>
+            <p>Please wait while we log you in</p>
+        </div>
+        
+        <div id="success" style="display: none;">
+            <div class="icon">
+                <svg class="checkmark" viewBox="0 0 52 52">
+                    <path d="M14 27l7 7 16-16" stroke-dasharray="48" stroke-dashoffset="48">
+                        <animate attributeName="stroke-dashoffset" to="0" dur="0.5s" begin="0.5s" fill="freeze"/>
+                    </path>
+                </svg>
+            </div>
+            <h1>خوش آمدید!</h1>
+            <h1>Welcome!</h1>
+            <p>Login successful! You can now return to the game.</p>
+            <p>کامیابی سے لاگ ان ہو گیا!</p>
+            <a href="#" class="button" onclick="returnToApp()">Return to AmirCollider</a>
+        </div>
+        
+        <div class="error" id="error">
+            <h1>Oops!</h1>
+            <p>Something went wrong. Please try again.</p>
+            <a href="#" class="button" onclick="window.close()">Close</a>
+        </div>
+    </div>
+
+    <script>
+        // Parse the OAuth response
+        function parseAuthResponse() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const token = params.get('access_token');
+            const error = params.get('error');
+            
+            if (token) {
+                // Success - show success message
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('success').style.display = 'block';
+                
+                // Store token temporarily
+                localStorage.setItem('amircollider_token', token);
+                
+                // Auto-return after 2 seconds
+                setTimeout(returnToApp, 2000);
+                
+            } else if (error) {
+                // Error
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.querySelector('.error p').textContent = `Error: ${error}`;
+            } else {
+                // No response - show loading
+                document.getElementById('loading').style.display = 'block';
+            }
+        }
+        
+        function returnToApp() {
+            const token = localStorage.getItem('amircollider_token');
+            
+            // Try multiple methods to return to app
+            const methods = [
+                // Method 1: Custom scheme with token
+                () => window.location.href = `amircollider://oauth?token=${token}`,
+                
+                // Method 2: Intent URL for Android
+                () => window.location.href = `intent://oauth?token=${token}#Intent;scheme=amircollider;package=com.AmirColliderGames.AmirCollider;end`,
+                
+                // Method 3: Simple custom scheme
+                () => window.location.href = 'amircollider://return',
+                
+                // Method 4: Close window
+                () => window.close()
+            ];
+            
+            // Try each method with delay
+            methods.forEach((method, index) => {
+                setTimeout(method, index * 500);
+            });
+            
+            // Show manual instruction after 3 seconds
+            setTimeout(() => {
+                document.querySelector('#success p').innerHTML += '<br><br><small>If the app doesn\'t open automatically, please return to it manually.</small>';
+            }, 3000);
+        }
+        
+        // Run on page load
+        parseAuthResponse();
+    </script>
+</body>
+</html>
